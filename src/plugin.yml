@@ -1,0 +1,24 @@
+name: APPerms
+main: ap.apperms.apdevteam.Main
+version: 1.0.0
+authors: [Foxtrot2400]
+depend: [Vault]
+commands:
+   apgivedonor:
+       description: Gives a player a donor rank
+       usage: /<command> <player> <rank>
+       permission: APPerm.givedonor
+   apremovedonor:
+       description: Removes a player's donor ranks
+       usage: /<command> <player>
+       permission: APPerm.removedonor
+
+adminRanks:
+- rank1
+- rank2
+- rank3
+
+donorRanks:
+- donor1
+- donor2
+- donor3
