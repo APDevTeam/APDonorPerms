@@ -12,13 +12,3 @@ commands:
        description: Removes a player's donor ranks
        usage: /<command> <player>
        permission: APPerm.removedonor
-
-adminRanks:
-- rank1
-- rank2
-- rank3
-
-donorRanks:
-- donor1
-- donor2
-- donor3
