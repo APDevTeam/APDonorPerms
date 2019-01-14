@@ -10,19 +10,22 @@ import net.milkbowl.vault.permission.Permission; //When compiling **MAKE SURE** 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger; //Java Logger
 
 
 public class Main extends JavaPlugin {
     private static final Logger log = Logger.getLogger("Minecraft"); //Sets up our logger for basic feedback to the console
     private static Permission perms; //Set up perms with vault
-    String[] ranks = {"rank1", "rank2", "rank3"};
-    String[] donorRanks = {"donor1", "donor2", "donor3"};
+    FileConfiguration config = this.getConfig();
+    String[] donorRanks = this.getConfig().getStringList("donorranks").toArray(new String[0]);
+    String[] ranks = this.getConfig().getStringList("adminranks").toArray(new String[0]);
 
     @Override
     public void onDisable() {
@@ -32,6 +35,21 @@ public class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         log.info(String.format("[%s] v%s initializing.", getDescription().getName(), getDescription().getVersion()));
+        config.options().copyDefaults(true);
+
+        if(!config.contains("adminranks")) {
+            config.createSection("adminranks");
+            List<String> adminvalues = new ArrayList<>();
+            adminvalues.add("admin1");
+            config.set("adminranks", adminvalues);
+        }
+        if(!config.contains("donorranks")){
+            config.createSection("donorranks");
+            List<String> donorvalues = new ArrayList<>();
+            donorvalues.add("donor1");
+            config.set("donorranks", donorvalues);
+        }
+        saveConfig();
         setupPermissions();
     }
 
@@ -72,6 +90,12 @@ public class Main extends JavaPlugin {
 
     private void addDonor(Player player, String donorRank) {
         perms.playerAddGroup(null, player, donorRank);
+        for (String string : ranks){
+            player.sendMessage(string);
+        }
+        for (String string : donorRanks){
+            player.sendMessage(string);
+        }
         fixStaff(player);
     }
 
