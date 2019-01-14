@@ -90,12 +90,6 @@ public class Main extends JavaPlugin {
 
     private void addDonor(Player player, String donorRank) {
         perms.playerAddGroup(null, player, donorRank);
-        for (String string : ranks){
-            player.sendMessage(string);
-        }
-        for (String string : donorRanks){
-            player.sendMessage(string);
-        }
         fixStaff(player);
     }
 
