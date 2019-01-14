@@ -23,9 +23,8 @@ import java.util.logging.Logger; //Java Logger
 public class Main extends JavaPlugin {
     private static final Logger log = Logger.getLogger("Minecraft"); //Sets up our logger for basic feedback to the console
     private static Permission perms; //Set up perms with vault
-    FileConfiguration config = this.getConfig();
-    String[] donorRanks = this.getConfig().getStringList("donorranks").toArray(new String[0]);
-    String[] ranks = this.getConfig().getStringList("adminranks").toArray(new String[0]);
+    private String[] donorRanks = getConfig().getStringList("donorRanks").toArray(new String[0]);
+    private String[] staffRanks = getConfig().getStringList("staffRanks").toArray(new String[0]);
 
     @Override
     public void onDisable() {
@@ -35,19 +34,19 @@ public class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         log.info(String.format("[%s] v%s initializing.", getDescription().getName(), getDescription().getVersion()));
-        config.options().copyDefaults(true);
+        getConfig().options().copyDefaults(true);
 
-        if(!config.contains("adminranks")) {
-            config.createSection("adminranks");
-            List<String> adminvalues = new ArrayList<>();
-            adminvalues.add("admin1");
-            config.set("adminranks", adminvalues);
+        if(!getConfig().contains("staffRanks")) {
+            getConfig().createSection("staffRanks");
+            List<String> adminValues = new ArrayList<>();
+            adminValues.add("admin1");
+            getConfig().set("staffRanks", adminValues);
         }
-        if(!config.contains("donorranks")){
-            config.createSection("donorranks");
-            List<String> donorvalues = new ArrayList<>();
-            donorvalues.add("donor1");
-            config.set("donorranks", donorvalues);
+        if(!getConfig().contains("donorRanks")){
+            getConfig().createSection("donorRanks");
+            List<String> donorValues = new ArrayList<>();
+            donorValues.add("donor1");
+            getConfig().set("donorRanks", donorValues);
         }
         saveConfig();
         setupPermissions();
@@ -67,48 +66,78 @@ public class Main extends JavaPlugin {
         }
 
         if (cmd.getName().equalsIgnoreCase("apgivedonor")) {
-            if (args.length == 1){
-                log.warning("No donor rank specified!");
+            if (args.length != 2) {
+                log.warning("Wrong number of arguments!");
                 return false;
             }
             else {
-                for(String donorGroupName: donorRanks) {
-                    if(donorGroupName.toLowerCase() == args[1].toLowerCase())
-                    log.info("Rank found");
-                    addDonor(player, args[1].toLowerCase());
+                for(String testRank : donorRanks) {
+                    if(testRank.equalsIgnoreCase(args[1]) {
+                        log.info("Rank found");
+                        addDonor(player, testRank.toLowerCase());
+                    }
                 }
             }
             return true;
-        } else if (cmd.getName().equalsIgnoreCase("apremovedonor")) {
+        }
+        else if (cmd.getName().equalsIgnoreCase("apremovedonor")) {
             removeDonor(player);
             return true;
-        } else {
+        }
+        else if (cmd.getName().equalsIgnoreCase("apfixdonor")) {
+            fixDonor(player);
+            return true;
+        }
+        else {
             return false;
         }
 
     }
 
     private void addDonor(Player player, String donorRank) {
-        perms.playerAddGroup(null, player, donorRank);
-        fixStaff(player);
+        for (String testRank : staffRanks) {
+            if (perms.getPrimaryGroup(player).equalsIgnoreCase(testRank)) {
+                //Player's primary group is found in staff ranks
+                delRank(player, testRank);
+                addRank(player, donorRank);
+                addRank(player, testRank);
+                return;  //Remove old rank, add donor, add old rank, return
+            }
+        }
+        addRank(player, donorRank); //Just add donor if they are not staff
     }
 
     private void removeDonor(Player player) {
-        for (String removeRank : donorRanks) {
-            perms.playerRemoveGroup(null, player, removeRank);
+        //Remove all donator ranks
+        for (String testRank : donorRanks) {
+            if(perms.playerInGroup(player, testRank))
+                delRank(player, testRank);
         }
     }
 
-    private void fixStaff(Player player) {
-        for(String adminGroup: ranks) {
-            if (perms.playerInGroup(null, player, adminGroup)) {
-                perms.playerRemoveGroup(null, player, adminGroup);
-                perms.playerAddGroup(null, player, adminGroup);
-
-            }
+    private void fixDonor(Player player) {
+        //Readd donator after a rankup (has to be triggered externally)
+        for (String testRank : donorRanks) {
+            if(perms.playerInGroup(player, testRank))
+                for(String staffTest : staffRanks)
+                {
+                    if(perms.getPrimaryGroup(player).equalsIgnoreCase((staffTest))) {
+                        //Player is staff, do not override top rank
+                        return;
+                    }
+                }
+                //Player is not staff, override top rank
+                delRank(player, testRank);
+                addRank(player, testRank);
         }
     }
 
+    private void addRank(Player p, String rank) {
+        perms.playerAddGroup(p, rank);
+    }
+    private void delRank(Player p, String rank) {
+        perms.playerRemoveGroup(p, rank);
+    }
 }
 
 
