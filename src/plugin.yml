@@ -20,3 +20,7 @@ commands:
        description: Shows a player's current groups
        usage: /<command> <player>
        permission: APPerm.listperms
+   apgiveplot:
+       description: Gives a plot to a player in the donorPlots world
+       usage: /<command> <player>
+       permission: APPerm.giveplot
