@@ -2,7 +2,7 @@ name: APPerms
 main: ap.apperms.apdevteam.Main
 version: 1.0.0
 authors: [Foxtrot2400, TylerS1066]
-depend: [Vault, PermissionsEx]
+depend: [Vault]
 commands:
    apgivedonor:
        description: Gives a player a donor rank
@@ -12,7 +12,11 @@ commands:
        description: Removes a player's donor ranks
        usage: /<command> <player>
        permission: APPerm.removedonor
-   aplistperms:
-       description: Shows a player's current permissions
+   apfixdonor:
+       description: Fixes the donor permissions for a player by re-stacking their ranks
+       usage: /<command> <player>
+       permission: APPerm.fixdonor
+   aplistgroups:
+       description: Shows a player's current groups
        usage: /<command> <player>
        permission: APPerm.listperms
