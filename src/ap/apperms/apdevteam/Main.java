@@ -58,6 +58,10 @@ public class Main extends JavaPlugin {
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if(args.length < 1){
+            sendMessage(sender, "Wrong number of arguments!");
+            return false;
+        }
         Player player = Bukkit.getPlayer(args[0]);            //Initialize who the target player is
 
         if (player == null) {
@@ -111,7 +115,7 @@ public class Main extends JavaPlugin {
 
     private void addDonor(Player player, String donorRank) {
         for (String testRank : staffRanks) {
-            if (perms.getPrimaryGroup(player).equalsIgnoreCase(testRank)) {
+            if (perms.playerInGroup(player, testRank)) {
                 //Player's primary group is found in staff ranks
                 delRank(player, testRank);
                 addRank(player, donorRank);
@@ -137,7 +141,7 @@ public class Main extends JavaPlugin {
             if(perms.playerInGroup(player, testRank))
                 for(String staffTest : staffRanks)
                 {
-                    if(perms.getPrimaryGroup(player).equalsIgnoreCase((staffTest))) {
+                    if(perms.playerInGroup(player, staffTest)) {
                         //Player is staff, do not override top rank
                         return;
                     }
@@ -160,10 +164,10 @@ public class Main extends JavaPlugin {
         }
     }
     private void addRank(Player p, String rank) {
-        perms.playerAddGroup(p, rank);           //Modularized call to easily add ranks for a player
+        perms.playerAddGroup(null, p, rank);           //Modularized call to easily add ranks for a player
     }
     private void delRank(Player p, String rank) {
-        perms.playerRemoveGroup(p, rank);        //Modularized call to easily remove ranks for a player
+        perms.playerRemoveGroup(null, p, rank);        //Modularized call to easily remove ranks for a player
     }
     private void sendMessage(CommandSender sender, String msg){ //Send message to either player or console, strings only (no lists)
         if(sender instanceof Player){ //If the sender is a player
