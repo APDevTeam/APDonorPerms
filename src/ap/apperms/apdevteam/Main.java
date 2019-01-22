@@ -107,12 +107,86 @@ public class Main extends JavaPlugin {
                 return true;
             }
         }
+        else if (cmd.getName().equalsIgnoreCase("apgiveplot")){ // This is an implementation from APPlotPerm, which allows
+                                                                            // for admins to give plot donor permissions with the correct stacking for displayed permissions
+            //If the player doesn't exist, tell the user & fail
+            if(player == null) {
+                sendMessage(sender, "**WARNING** Player not found."); //If player isn't found, alert the sender
+                return false;
+            }
+            int num;
+            try
+            {
+                if (args.length == 1)
+                    num = 1;    //If a number isn't specified, assume one
+                else
+                    num = Integer.parseInt(args[1]); //Otherwise, set our add plots number to whatever the user specified
+            }
+            catch(NumberFormatException e)
+            {
+                sendMessage(sender, "**WARNING** Invalid number."); //If the number is not a number, alert the user
+                return true;
+            }
+
+            if (!perms.playerInGroup(player,"plotDonor")) //If player doesn't have the plotDonor rank, give it to them and set them to num plots
+            {
+                perms.playerAddGroup(null, player, "plotDonor"); // This is where implementation of APPlotPerm to APPerms becomes necessary.
+                fixPlotPerm(player);                                          // APPerms allows for easy permission stacking, which APPlotPerm can now take advantage of
+                setPlot(player, num);                                         // through these two modules.
+            }
+            else //Else, add num plots
+            {
+                addPlot(sender, player, num);
+            }
+            return true;
+        }
         else {
             return false;
         }
 
     }
+    private void setPlot(Player p, int num)
+    {
+        String temp = "plots.plot." + num;
+        perms.playerAdd("donorPlots", p, temp); //Add the player's correct number of plots
+    }
+    private void unSetPlot(Player p, int num)
+    {
+        String temp = "plots.plot." + num;
+        perms.playerRemove("donorPlots", p, temp); //Remove the old plot permission number as it is not needed
+    }
+    private void addPlot(CommandSender sender, Player player, int num)
+    {
+        int current = getPlotCount(player);
 
+        if(current == -1)
+        {
+            sendMessage(sender, (String.format("Player %s plot count not found.", player.getDisplayName()))); //If we can't find the number of plots already, alert the sender
+            return;
+        }
+        else if(current >= 20)
+        {
+            sendMessage(sender, (String.format("Player %s already has 20 plots.", player.getDisplayName()))); //If the player already has 20 plots, alert the sender
+            return;
+        }
+
+        unSetPlot(player, current);         //Unsets the old plot number
+        setPlot(player,current + num); //Sets the new plot number
+        sendMessage(sender, (String.format("Given player %s permission for %s plots.", player.getDisplayName(), current+num))); //Alert the sender the action is complete
+    }
+    private int getPlotCount(Player p) //Gets the current plot count of a player
+    {
+        String testStr;
+        for(int i = 0; i <= 20; i++)
+        {
+            testStr = "plots.plot." + i;
+            if(perms.playerHas("donorPlots", p, testStr))
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
     private void addDonor(Player player, String donorRank) {
         for (String testRank : staffRanks) {
             if (perms.playerInGroup(player, testRank)) {
@@ -151,11 +225,25 @@ public class Main extends JavaPlugin {
             addRank(player, testRank);
         }
     }
+    private void fixPlotPerm(Player player){ //This is our fix for APPlotPerms permission stacking
+        for(String staffTest : staffRanks){
+            for(String testRank: donorRanks){ //This stacks any donor ranks above the plotDonor permission
+                delRank(player, testRank);
+                addRank(player, testRank);
+            }
+            if(perms.playerInGroup(player, staffTest)){ //This stacks any admin ranks above both donor and plotDonor permissions
+                delRank(player, staffTest);
+                addRank(player, staffTest);
+                return;
+            }
+        }
+    }
     private void listGroups(Player p, Player targetPlayer){
         String[] groups = perms.getPlayerGroups(targetPlayer); //Get the target player's groups
         p.sendMessage(ChatColor.DARK_GREEN + "[APPerms] " + ChatColor.YELLOW + "Groups for " + targetPlayer.getDisplayName()); //
         p.sendMessage(groups); //Send the list of groups to the player
     }
+
     private void listGroupsConsole(Player targetPlayer){
         String[] groups = perms.getPlayerGroups(targetPlayer); //Get player's groups as a list from Vault
         log.info("[APPerms] Groups for " + targetPlayer.getDisplayName()); //Display "Groups for" as a setup
@@ -163,12 +251,15 @@ public class Main extends JavaPlugin {
             log.info(group);       //Since the console is weird, send each group individually as its own string vs as a list
         }
     }
+
     private void addRank(Player p, String rank) {
         perms.playerAddGroup(null, p, rank);           //Modularized call to easily add ranks for a player
     }
+
     private void delRank(Player p, String rank) {
         perms.playerRemoveGroup(null, p, rank);        //Modularized call to easily remove ranks for a player
     }
+
     private void sendMessage(CommandSender sender, String msg){ //Send message to either player or console, strings only (no lists)
         if(sender instanceof Player){ //If the sender is a player
             Player p = (Player) sender; //Initialize the player
