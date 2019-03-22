@@ -12,11 +12,15 @@ commands:
        description: Removes a player's donor ranks
        usage: /<command> <player>
        permission: APPerm.removedonor
-   apfixdonor:
-       description: Fixes the donor permissions for a player by re-stacking their ranks
+   fixranks:
+       description: Fixes the permissions for a player by re-stacking their ranks
        usage: /<command> <player>
-       permission: APPerm.fixdonor
-   aplistgroups:
+       permission: APPerm.fixranks
+   fixstaff:
+     description: Adds the player rank to an admin and restacks their ranks correctly
+     usage: /<command> <player>
+     permission: APPerm.fixstaff
+   listgroups:
        description: Shows a player's current groups
        usage: /<command> <player>
        permission: APPerm.listperms
