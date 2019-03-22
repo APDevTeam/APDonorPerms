@@ -24,7 +24,8 @@ public class Main extends JavaPlugin {
     private static Permission perms;  //Set up perms with vault
     private String[] donorRanks = getConfig().getStringList("donorRanks").toArray(new String[0]); // Pulls our donor ranks list from config
     private String[] staffRanks = getConfig().getStringList("staffRanks").toArray(new String[0]); // Pulls our admin ranks list from config
-
+    private String[] otherRanks = getConfig().getStringList("otherRanks").toArray(new String[0]); // Pulls our other ranks list from the config
+    private String playerRank = getConfig().getString("playerRank");
     @Override
     public void onDisable() {
         log.info(String.format("[%s] Disabled Version %s", getDescription().getName(), getDescription().getVersion())); //Notify the console the plugin is disabled
@@ -47,6 +48,15 @@ public class Main extends JavaPlugin {
             donorValues.add("donor1");
             getConfig().set("donorRanks", donorValues);  //Creates our example rank
         }
+        if(!getConfig().contains("otherRanks")){
+            getConfig().createSection("otherRanks"); //Makes the section
+            List<String> donorValues = new ArrayList<>();
+            donorValues.add("other1");
+            getConfig().set("otherRanks", donorValues);  //Creates our example rank
+        }
+        if(!getConfig().contains("playerRank")){
+            getConfig().set("playerRank", "Player");
+        }
         saveConfig(); //Spigot's save config feature
         setupPermissions(); // Set up our basic permission parameters
     }
@@ -58,15 +68,28 @@ public class Main extends JavaPlugin {
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if(args.length < 1){
-            sendMessage(sender, "Wrong number of arguments!");
-            return false;
+        Player player = null;
+        if(args.length > 0) {
+            player = Bukkit.getPlayer(args[0]);            //Initialize who the target player is
         }
-        Player player = Bukkit.getPlayer(args[0]);            //Initialize who the target player is
-
         if (player == null) {
-            sendMessage(sender, "Player not found.");
-            return false;
+            if(cmd.getName().equalsIgnoreCase("listgroups") | cmd.getName().equalsIgnoreCase("fixranks") | cmd.getName().equalsIgnoreCase("fixStaff")){
+                if (sender instanceof Player){
+                    player = (Player) sender;
+                }
+                else{
+                    sendMessage(sender, "Wrong number of arguments!");
+                    return false;
+                }
+            }
+            else if(args.length < 1) {
+                sendMessage(sender, "Wrong number of arguments!");
+                return false;
+            }
+            else {
+                sendMessage(sender, "Player not found.");
+                return false;
+            }
         }
 
         if (cmd.getName().equalsIgnoreCase("apgivedonor")) {
@@ -92,12 +115,17 @@ public class Main extends JavaPlugin {
             sendMessage(sender, "Donor rank removed.");
             return true;
         }
-        else if (cmd.getName().equalsIgnoreCase("apfixdonor")) {
-            fixDonor(player);   //Fixes the donor permissions for a player by re-stacking their ranks (top shows up to everyone)
-            sendMessage(sender, "Donor rank fixed.");
+        else if (cmd.getName().equalsIgnoreCase("fixranks")) {
+            fixRanks(player);   //Fixes the donor permissions for a player by re-stacking their ranks (top shows up to everyone)
+            sendMessage(sender, "Rank stacking fixed.");
             return true;
         }
-        else if (cmd.getName().equalsIgnoreCase("aplistgroups")){
+        else if (cmd.getName().equalsIgnoreCase("fixStaff")) {
+            fixStaff(player);
+            sendMessage(sender, "Added player rank and restacked ranks.");
+            return true;
+        }
+        else if (cmd.getName().equalsIgnoreCase("listgroups")){
             if(!(sender instanceof Player)){ //If the console is running this command, use the logger version.
                 listGroupsConsole(player);
                 return true;
@@ -208,32 +236,38 @@ public class Main extends JavaPlugin {
             }
         }
     }
+    private void fixStaff(Player player) {
+        addRank(player, playerRank);
+        fixRanks(player);
+    }
+    private void fixRanks(Player player) {
+        //Fix all rank stacking after a rank up (has to be triggered externally)
 
-    private void fixDonor(Player player) {
-        //Read donor after a rank up (has to be triggered externally)
-        for (String testRank : donorRanks) {
-            if(perms.playerInGroup(player, testRank))
-                for(String staffTest : staffRanks)
-                {
-                    if(perms.playerInGroup(player, staffTest)) {
-                        //Player is staff, do not override top rank
-                        return;
-                    }
-                }
-            //Player is not staff, override top rank
-            delRank(player, testRank);
-            addRank(player, testRank);
+        for (String testRank : otherRanks) {
+            if (perms.playerInGroup(player, testRank)) { //Stack misc ranks to top first
+                redoRank(player, testRank);
+            }
         }
+        for (String testRank : donorRanks) {
+            if (perms.playerInGroup(player, testRank)) { //Put donor ranks on top of misc ranks
+                redoRank(player, testRank);
+            }
+        }
+        for (String testRank : staffRanks) {
+            if (perms.playerInGroup(player, testRank)) { //Put admin ranks on top of all of those
+                redoRank(player, testRank);
+            }
+        }
+
     }
     private void fixPlotPerm(Player player){ //This is our fix for APPlotPerms permission stacking
         for(String staffTest : staffRanks){
             for(String testRank: donorRanks){ //This stacks any donor ranks above the plotDonor permission
-                delRank(player, testRank);
-                addRank(player, testRank);
+                redoRank(player, testRank);
             }
+
             if(perms.playerInGroup(player, staffTest)){ //This stacks any admin ranks above both donor and plotDonor permissions
-                delRank(player, staffTest);
-                addRank(player, staffTest);
+                redoRank(player, staffTest);
                 return;
             }
         }
@@ -250,6 +284,11 @@ public class Main extends JavaPlugin {
         for(String group : groups){
             log.info(group);       //Since the console is weird, send each group individually as its own string vs as a list
         }
+    }
+    private void redoRank(Player p, String rank) {
+        delRank(p, rank);
+        addRank(p, rank);
+
     }
 
     private void addRank(Player p, String rank) {
