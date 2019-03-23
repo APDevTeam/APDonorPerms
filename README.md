@@ -6,14 +6,16 @@ Automatic donor permission commands for the Airship Pirates server
 ### Commands:
 ```/apgivedonor - Gives a player a donor rank
 /apremovedonor - Removes a player's donor ranks
-/apfixdonor - Fixes the donor permissions for a player by re-stacking their ranks
-/aplistgroups - Shows a player's current groups
+/fixranks - Fixes the permissions for a player by re-stacking their ranks
+/fixstaff - Adds the player rank to a user and restacks their ranks accordingly
+/listgroups - Shows a player's current groups
 /apgiveplot - Gives a plot to a player in the donorPlots world
 ```
 ### Permissions:
 ```/apgivedonor - APPerm.givedonor
 /apremovedonor - APPerm.removedonor
-/apfixdonor - APPerm.fixdonor
-/aplistgroups - APPerm.listperms
+/fixranks - APPerm.fixranks
+/fixstaff - APPerm.fixstaff
+/listgroups - APPerm.listperms
 /apgiveplot - APPerm.giveplot
 ```
