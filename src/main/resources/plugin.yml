@@ -1,6 +1,7 @@
 name: APPerms
 main: ap.apperms.apdevteam.APPerms
 version: ${project.version}
+api-version: 1.14
 authors: [TylerS1066]
 depend: [Vault]
 commands:
